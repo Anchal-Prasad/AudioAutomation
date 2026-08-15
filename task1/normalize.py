@@ -1,26 +1,24 @@
 """
-Normalization helpers for the ConsultBae merge pipeline.
-Each function documents WHICH data issue (from the Task 4 report) it fixes.
+Normalization helpers for the merge pipeline.
+Each function documents WHICH data issue 
 """
 import re
 from datetime import datetime
 
-# --- Issue #6: phone format inconsistency (10-digit / 91-prefix / +91-dash) ---
 def normalize_phone(raw):
     if raw is None or (isinstance(raw, float) and str(raw) == 'nan'):
         return None
     digits = re.sub(r'\D', '', str(raw))
     if len(digits) < 10:
         return None
-    return digits[-10:]  # last 10 digits = the actual mobile number, strips any country code
+    return digits[-10:] 
 
-# --- Issue #7: email casing inconsistency ---
+
 def normalize_email(raw):
     if raw is None or (isinstance(raw, float) and str(raw) == 'nan'):
         return None
     return str(raw).strip().lower()
 
-# --- Issue #8/#9: city naming variants + whitespace ---
 _CITY_RENAME_MAP = {
     'gurgaon': 'Gurugram',
     'gurugram': 'Gurugram',
@@ -61,7 +59,6 @@ def normalize_name(raw):
         return None
     return re.sub(r'\s+', ' ', str(raw)).strip().lower()
 
-# --- Issue #10: 4 mixed date formats in Applied Date ---
 def parse_applied_date(raw):
     if raw is None:
         return None
@@ -71,19 +68,19 @@ def parse_applied_date(raw):
             return datetime.strptime(d, fmt).date().isoformat()
         except ValueError:
             continue
-    return None  # unparseable — logged by caller
+    return None 
 
-# --- Issue #11: CTC unit inconsistency (Lakhs vs raw INR) ---
+
 def normalize_ctc(raw):
     """Returns (normalized_inr, was_corrected)"""
     if raw is None:
         return None, False
     val = float(raw)
-    if val < 1000:  # e.g. 4.2 -> clearly Lakhs, not raw rupees
+    if val < 1000:  
         return val * 100000, True
     return val, False
 
-# --- Issue #12: rate mixes hourly / monthly units ---
+
 def parse_rate(raw):
     """Returns (amount, unit) where unit is 'hour' or 'month'"""
     if raw is None or (isinstance(raw, float) and str(raw) == 'nan'):
@@ -98,13 +95,11 @@ def parse_rate(raw):
     unit = 'hour' if m.group(2) in ('hr', 'hour') else 'month'
     return amount, unit
 
-# --- Issue #13: status casing ---
 def normalize_status(raw):
     if raw is None or (isinstance(raw, float) and str(raw) == 'nan'):
         return None
     return str(raw).strip().lower()
 
-# --- Issue #14: Verified encoded 4 different ways ---
 def normalize_verified(raw):
     if raw is None:
         return None
@@ -115,14 +110,14 @@ def normalize_verified(raw):
         return False
     return None
 
-# --- Issue #15: skill casing inconsistency between S1 (Title Case) and S2 (lowercase) ---
+
 def normalize_skills(raw):
     if raw is None or (isinstance(raw, float) and str(raw) == 'nan'):
         return []
     return sorted({s.strip().lower() for s in str(raw).split(',') if s.strip()})
 
 if __name__ == '__main__':
-    # quick sanity checks
+   
     assert normalize_phone('+91-9000000131') == '9000000131'
     assert normalize_phone(919000000254) == '9000000254'
     assert normalize_email('ISHA.CHOPRA95@MAILTEST.EXAMPLE.ORG') == 'isha.chopra95@mailtest.example.org'

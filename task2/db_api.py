@@ -1,8 +1,4 @@
 """
-Task 2 support API — a thin, local REST layer over consultbae.db so the n8n
-workflow can read "who needs a skill category" and write results back,
-without n8n needing native SQLite support (which is inconsistent across
-n8n versions/installs).
 
 Run: python3 db_api.py
 Listens on http://localhost:5000
@@ -22,9 +18,6 @@ import sqlite3
 from flask import Flask, jsonify, request
 
 import os
-# db_api.py lives in task2/, but the merged DB is built by task1/merge_pipeline.py
-# and lives in task1/. Point at it via a relative path so this works regardless
-# of the folder you launch python from, as long as the task1/task2 layout holds.
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "task1", "consultbae.db")
 app = Flask(__name__)
 

@@ -8,7 +8,6 @@ Run this AFTER merge_pipeline.py has created consultbae.db.
 import sqlite3
 import os
 
-# This script lives in task2/, the DB lives in task1/ (built by merge_pipeline.py)
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "task1", "consultbae.db")
 
 def main():

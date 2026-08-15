@@ -149,7 +149,7 @@ check("idempotent: same total people count on re-run", first_count == second_cou
 check("idempotent: same needs_review count on re-run", first_review == second_review,
       f"{first_review} vs {second_review}")
 
-# ---------------------------------------------------------------------
+
 print(f"\n{'='*50}")
 if FAILS:
     print(f"{len(FAILS)} CHECK(S) FAILED: {FAILS}")
