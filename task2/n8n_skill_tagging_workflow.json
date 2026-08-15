@@ -1,0 +1,129 @@
+{
+  "name": "ConsultBae - LLM Skill Category Auto-Tagger (Groq)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1a1a1a1a-0000-4000-8000-000000000001",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://localhost:5000/people/untagged",
+        "options": {}
+      },
+      "id": "1a1a1a1a-0000-4000-8000-000000000002",
+      "name": "Get Untagged People",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"llama-3.1-8b-instant\", temperature: 0, messages: [ { role: \"user\", content: \"You are classifying a person's technical skill set for a consulting agency. Skills: \" + $json.skills + \". Pick exactly ONE category from this list: automation-heavy, web dev, data, design, other. Answer with ONLY the category text, nothing else, no punctuation, no explanation.\" } ] }) }}",
+        "options": {}
+      },
+      "id": "1a1a1a1a-0000-4000-8000-000000000003",
+      "name": "Classify with Groq",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 420],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "name": "Groq API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "1a1a1a1a-0000-4000-8000-000000000004",
+      "name": "Merge Person + Classification",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const allowed = ['automation-heavy', 'web dev', 'data', 'design', 'other'];\nconst llmText = $json.choices?.[0]?.message?.content ?? $json.response ?? '';\nlet raw = llmText.toString().trim().toLowerCase();\n// strip trailing punctuation / quotes the model sometimes adds\nraw = raw.replace(/[\".!]/g, '').trim();\n\nlet category = allowed.includes(raw) ? raw : 'other';\n\nreturn {\n  json: {\n    person_id: $json.person_id,\n    canonical_name: $json.canonical_name,\n    skills: $json.skills,\n    raw_llm_output: llmText,\n    category: category\n  }\n};"
+      },
+      "id": "1a1a1a1a-0000-4000-8000-000000000005",
+      "name": "Parse & Validate Category",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://localhost:5000/people/{{ $json.person_id }}/tag",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ category: $json.category }) }}",
+        "options": {}
+      },
+      "id": "1a1a1a1a-0000-4000-8000-000000000006",
+      "name": "Write Tag Back to DB",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 300]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          { "node": "Get Untagged People", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Get Untagged People": {
+      "main": [
+        [
+          { "node": "Merge Person + Classification", "type": "main", "index": 0 },
+          { "node": "Classify with Groq", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Classify with Groq": {
+      "main": [
+        [
+          { "node": "Merge Person + Classification", "type": "main", "index": 1 }
+        ]
+      ]
+    },
+    "Merge Person + Classification": {
+      "main": [
+        [
+          { "node": "Parse & Validate Category", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Parse & Validate Category": {
+      "main": [
+        [
+          { "node": "Write Tag Back to DB", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
