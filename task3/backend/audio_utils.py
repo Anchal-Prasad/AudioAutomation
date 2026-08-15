@@ -58,7 +58,7 @@ def extract_audio_properties(filepath: str) -> dict:
     bitrate_kbps = round(int(raw_bitrate) / 1000, 1) if raw_bitrate else None
 
     audio = AudioSegment.from_file(filepath)
-    loudness_db = audio.dBFS  # can be -inf for pure silence
+    loudness_db = audio.dBFS  
 
     return {
         "duration_sec": round(duration_sec, 2),

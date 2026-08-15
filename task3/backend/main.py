@@ -22,7 +22,7 @@ UPLOAD_DIR = os.path.join(BACKEND_DIR, "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 sys.path.insert(0, os.path.join(BACKEND_DIR, "..", "..", "task1"))
-from normalize import normalize_phone  # noqa: E402
+from normalize import normalize_phone  
 
 ALLOWED_EXTENSIONS = {".webm", ".wav", ".mp3", ".ogg", ".m4a"}
 
